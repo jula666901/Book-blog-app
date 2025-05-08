@@ -10,7 +10,7 @@
 <body>
     <header>
         <div class="navbar">
-            <h1>Blog It App</h1>
+            <h1>Book Blog App</h1>
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('create_post') }}">Create a New Post</a>
                 <a href="{{ url_for('logout') }}">Logout</a>
@@ -21,12 +21,31 @@
         </div>
     </header>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
     <section class="posts-container">
+        <div class="post-card">
+            <h2>Book Blog App</h2>
+            <p>This is a place where people can post blogs about their favorite books. Share your reviews, opinions, and discoveries with fellow readers!</p>
+        </div>
+
         {% for post in posts %}
             <div class="post-card">
-                <h2>Book Blog App</h2>
-                <p>This is a place where people can post blogs about their favorite books. Share your reviews, opinions, and discoveries with fellow readers!</p>
-
+                {% if post.author.username == "admin" %}
+    <h2>Welcome from Admin</h2>
+    <p>Hello readers, feel free to share your passion for reading here! Everyone is welcome to the community of book-lovers!</p>
+{% else %}
+    <h2>{{ post.title }}</h2>
+    <p>{{ post.content }}</p>
+{% endif %}
                 {% if post.image_url %}
                     <img src="{{ url_for('static', filename=post.image_url) }}" alt="Post Image" class="post-image">
                 {% endif %}
@@ -36,11 +55,18 @@
                 <div class="post-comments">
                     <h4><strong>Comment your latest reads here!</strong></h4>
                     {% for comment in post.comments %}
-                        <p class="comment">{{ comment.content }} (by {{ comment.author.username }})</p>
+                        <p class="comment">
+                            {{ comment.content }} (by {{ comment.author.username }})
+                            {% if current_user.id == comment.user_id %}
+                                <form action="{{ url_for('delete_comment', comment_id=comment.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" style="margin-left: 10px;">Delete</button>
+                                </form>
+                            {% endif %}
+                        </p>
                     {% else %}
                         <p>No comments yet.</p>
                     {% endfor %}
-                    
+
                     <form method="POST" action="{{ url_for('add_comment', post_id=post.id) }}">
                         <textarea name="comment" placeholder="Add a comment..."></textarea>
                         <button type="submit">Post Comment</button>
@@ -96,7 +122,7 @@
 
     <section class="rate-books">
         <h2>Rate the Books You've Read</h2>
-        <form method="POST" action="/rate">
+        <form method="POST" action="{{ url_for('rate_book') }}">
             <input type="text" name="book_title" placeholder="Book Title" required>
             <select name="rating" required>
                 <option value="">Rating</option>
